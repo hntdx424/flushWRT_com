@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlushWRT Administration | Commercial Edition</title>
+    <style>
+        /* Base page styling to mimic early 2000s router interfaces */
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #6666CC; /* Classic Linksys blue background */
+            margin: 0;
+            padding: 20px;
+            font-size: 12px;
+            color: #000;
+        }
+
+        /* Main application wrapper */
+        .container {
+            width: 800px;
+            margin: 0 auto;
+            background-color: #E7E7E7;
+            border: 2px solid #000;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
+        }
+
+        /* Header Styles - Updated to Commercial/Hardware Store Orange */
+        .header {
+            background-color: #F96302;
+            color: #fff;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-style: italic;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-shadow: 1px 1px 2px #000;
+        }
+
+        .header .model {
+            text-align: right;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* Primary Navigation Tabs */
+        .tabs {
+            background-color: #000;
+            color: #fff;
+            display: flex;
+            border-bottom: 4px solid #F96302;
+        }
+
+        .tab {
+            padding: 8px 13px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            border-right: 1px solid #fff;
+        }
+
+        .tab:hover {
+            background-color: #333;
+        }
+
+        /* Active tab indicator */
+        .tab.active {
+            background-color: #F96302;
+        }
+
+        /* Secondary header text below tabs */
+        .sub-tabs {
+            background-color: #F96302;
+            color: #fff;
+            padding: 5px 20px;
+            font-size: 11px;
+            text-align: right;
+        }
+
+        /* Main Content Layout - Two Column Flexbox */
+        .main-body {
+            display: flex;
+            min-height: 400px;
+        }
+
+        /* Left Sidebar: Contextual Help Panel */
+        .help-col {
+            width: 200px;
+            background-color: #6666CC;
+            color: #fff;
+            padding: 20px;
+            font-size: 11px;
+            line-height: 1.5;
+            border-right: 2px solid #000;
+        }
+
+        .help-col h3 {
+            margin-top: 0;
+            font-size: 13px;
+            border-bottom: 1px solid #fff;
+            padding-bottom: 5px;
+        }
+
+        /* Right Column: Main Configuration Forms */
+        .content-col {
+            width: 600px;
+            padding: 20px;
+            background-color: #E7E7E7;
+        }
+
+        /* Form Styling & Typography */
+        .section-title {
+            color: #F96302;
+            font-size: 16px;
+            font-weight: bold;
+            border-bottom: 2px solid #F96302;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+        }
+
+        table.form-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        table.form-table td {
+            padding: 6px;
+            vertical-align: middle;
+        }
+
+        /* Target the label column to right-align the text */
+        table.form-table td:first-child {
+            width: 40%;
+            text-align: right;
+            padding-right: 15px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        select, input[type="text"], input[type="password"] {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            padding: 2px;
+            border: 1px solid #000;
+            background-color: #fff;
+        }
+
+        hr {
+            border: 0;
+            border-top: 1px solid #ccc;
+            margin: 15px 0;
+        }
+
+        /* Global Action Buttons (Save/Cancel) */
+        .action-buttons {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #ccc;
+        }
+
+        /* Retro Button Styling */
+        button {
+            background-color: #ccc;
+            border: 1px solid #000;
+            border-right: 2px solid #000;
+            border-bottom: 2px solid #000;
+            padding: 5px 15px;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 0 5px;
+        }
+
+        button:active {
+            border: 1px solid #000;
+            border-top: 2px solid #000;
+            border-left: 2px solid #000;
+        }
+
+        /* Terminal-style System Logs Area */
+        .logs-area {
+            width: 100%;
+            height: 250px;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 11px;
+            background: #fff;
+            border: 1px inset #000;
+            padding: 10px;
+            overflow-y: scroll;
+            box-sizing: border-box;
+            white-space: pre-wrap; /* Preserves line breaks in the log text */
+            margin-bottom: 10px;
+        }
+
+        /* Page Visibility Classes (Handled via JavaScript) */
+        .page { display: none; }
+        .page.active { display: block; }
+        
+        /* Modal Overlays (Popups) */
+        #save-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #E7E7E7;
+            border: 2px solid #000;
+            padding: 20px;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.5); /* Dim background */
+            z-index: 100;
+        }
+
+        #warning-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #E7E7E7;
+            border: 2px solid red;
+            padding: 20px;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.5);
+            z-index: 101;
+            max-width: 400px;
+        }
+        
+        #warning-modal h2 {
+            color: red;
+            margin-top: 0;
+            font-size: 16px;
+            text-transform: uppercase;
+        }
+
+        /* Detailed Raw Scan Modal */
+        #details-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #E7E7E7;
+            border: 2px solid #F96302;
+            padding: 20px;
+            text-align: left;
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.5);
+            z-index: 102; /* Highest z-index to appear over everything */
+            max-width: 500px;
+            width: 90%;
+        }
+
+        #details-modal h2 {
+            color: #F96302;
+            margin-top: 0;
+            font-size: 16px;
+            text-transform: uppercase;
+            border-bottom: 2px solid #F96302;
+            padding-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Application Header -->
+    <div class="header">
+        <h1>FlushWRT</h1>
+        <div class="model">
+            Commercial Heavy-Duty Smart Toilet<br>
+            Model No.: FLUSH-WRT54G-COM<br>
+            <span style="font-weight: normal; font-size: 10px;">Firmware: DD-FLUSH v4.20.1-COMMERCIAL</span>
+        </div>
+    </div>
+
+    <!-- Navigation Menu (onClick triggers the switchTab JS function) -->
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('setup', this)">Setup</div>
+        <div class="tab" onclick="switchTab('hydraulics', this)">Hydraulics</div>
+        <div class="tab" onclick="switchTab('thermals', this)">Thermals</div>
+        <div class="tab" onclick="switchTab('atmospherics', this)">Atmospherics</div>
+        <div class="tab" onclick="switchTab('biometrics', this)">Biometrics</div>
+        <div class="tab" onclick="switchTab('audio_controls', this)">Audio & Controls</div>
+        <div class="tab" onclick="switchTab('usage', this)">Usage Monitor</div>
+        <div class="tab" onclick="switchTab('logs', this)">Status & Logs</div>
+    </div>
+    
+    <div class="sub-tabs" id="sub-tabs-text">
+        Commercial Toilet Configuration
+    </div>
+
+    <div class="main-body">
+        <!-- Sidebar Panel for dynamic help text -->
+        <div class="help-col" id="help-content">
+            <h3>Help Information</h3>
+            <p>Select a tab above to configure your FlushWRT smart toilet.</p>
+            <p><strong>Note:</strong> Changes will not take effect until you click "Save Settings".</p>
+        </div>
+
+        <div class="content-col">
+            <!-- ============================================== -->
+            <!-- TAB 1: SETUP (Network, Security, VLANs)        -->
+            <!-- ============================================== -->
+            <div id="setup" class="page active">
+                <div class="section-title">Network & System Setup</div>
+                <table class="form-table">
+                    <tr>
+                        <td>Local IP Address:</td>
+                        <td><input type="text" value="10.0.42.5" size="15" onchange="showWarning('Changing the IP Address will disconnect you from the FlushWRT interface immediately upon saving. You will need to navigate to the new IP to continue management.')"></td>
+                    </tr>
+                    <tr>
+                        <td>Subnet Mask:</td>
+                        <td><input type="text" value="255.255.0.0" size="15" onchange="showWarning('Incorrect Subnet Mask configurations may result in an unreachable FlushWRT unit on the corporate network.')"></td>
+                    </tr>
+                    <tr>
+                        <td>Device Name:</td>
+                        <td><input type="text" value="HD_Store4291_Mens_Stall_3" size="30"></td>
+                    </tr>
+                    <tr>
+                        <td>Auto-Flush Feature:</td>
+                        <td>
+                            <input type="radio" name="autoflush" checked> Enable 
+                            <input type="radio" name="autoflush" onchange="if(this.checked) showWarning('CRITICAL POLICY VIOLATION: Disabling automated flushing transfers payload clearance responsibility to end-users. Historical data shows contractors have a 98% manual flush failure rate. This will result in catastrophic biological stagnation, concrete-like payload hardening, and immediate OSHA hazmat citations.')"> Disable
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Auto-Emergency Clog Release:</td>
+                        <td>
+                            <input type="radio" name="autoclog" checked onchange="if(this.checked) showWarning('WARNING: Enabling Auto-Emergency Clog Release will automatically discharge high-pressure CO2 if 2 consecutive auto-flush attempts fail (30-second interval). Ensure lid is closed and pets are clear during unsupervised operation.')"> Enable 
+                            <input type="radio" name="autoclog"> Disable
+                        </td>
+                    </tr>
+                </table>
+
+                <div class="section-title">Loss Prevention & Security</div>
+                <table class="form-table">
+                    <tr>
+                        <td>Security Office (VLAN IP):</td>
+                        <td><input type="text" value="10.0.99.50" size="15"> Port: <input type="text" value="80" size="4"></td>
+                    </tr>
+                    <tr>
+                        <td>Human Resources (VLAN IP):</td>
+                        <td><input type="text" value="10.0.40.15" size="15"> Port: <input type="text" value="80" size="4"></td>
+                    </tr>
+                    <tr>
+                        <td>RFID Badge Access Control:</td>
+                        <td>
+                            <input type="radio" name="rfid_access" checked onchange="if(this.checked) addLogEntry('SYSTEM: Stall access restricted to authorized RFID badges only. Metadata logging active.')"> Enable 
+                            <input type="radio" name="rfid_access" onchange="if(this.checked) showWarning('WARNING: Disabling RFID Access opens the stall to public/untracked use. Health and toolbelt data will become anonymous.')"> Disable
+                            <div style="font-size: 10px; margin-top: 5px; color: #333;"><i>Requires active badge scan to unlock hardened steel actuator.</i></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Loitering Silent Alarm:</td>
+                        <td>
+                            <input type="radio" name="alarm_loiter" checked onchange="if(this.checked) addLogEntry('SYSTEM: Loitering silent alarm enabled (Threshold: 15m).')"> Enable 
+                            <input type="radio" name="alarm_loiter"> Disable
+                            <div style="font-size: 10px; margin-top: 5px; color: #333;"><i>Alerts security office if occupancy exceeds 15 minutes.</i></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Code 4 (Inappropriate Conduct) Alarm:</td>
+                        <td>
+                            <input type="radio" name="alarm_code4" checked onchange="if(this.checked) addLogEntry('SYSTEM: Code 4 behavioral monitoring active.')"> Enable 
+                            <input type="radio" name="alarm_code4"> Disable
+                            <div style="font-size: 10px; margin-top: 5px; color: #333;"><i>Detects rhythmic physical oscillation, suspicious acoustics, and seminal fluid. Routes silent telemetry to Security, AND copies Human Resources if user is an employee.</i></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Lock Tamper Silent Alarm:</td>
+                        <td>
+                            <input type="radio" name="alarm_tamper" checked> Enable 
+                            <input type="radio" name="alarm_tamper" onchange="if(this.checked) showWarning('WARNING: Disabling the tamper alarm leaves the hardened steel actuator vulnerable to undetected brute-force attacks after hours.')"> Disable
+                        </td>
+                    </tr>
+                </table>
+
+                <div class="section-title">Wireless Network Setup</div>
+                <table class="form-table">
+                    <tr>
+                        <td>Wireless Network Mode:</td>
+                        <td>
+                            <select>
+                                <option selected>Mixed</option>
+                                <option>Wireless-G Only</option>
+                                <option>Wireless-B Only</option>
+                                <option>Disabled</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Wireless Network Name (SSID):</td>
+                        <td><input type="text" value="HD_Store_LooNet" size="25"></td>
+                    </tr>
+                    <tr>
+                        <td>Wireless Channel:</td>
+                        <td>
+                            <select>
+                                <option>1 - 2.412 GHz</option>
+                                <option selected>6 - 2.437 GHz</option>
+                                <option>11 - 2.462 GHz</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Wireless SSID Broadcast:</td>
+                        <td>
+                            <input type="radio" name="ssidbroadcast"> Enable 
+                            <input type="radio" name="ssidbroadcast" checked> Disable (Hidden)
+                        </td>
+                    </tr>
+                </table>
+
+                <div class="section-title">Wireless Security</div>
+                <table class="form-table">
+                    <tr>
+                        <td>Security Mode:</td>
+                        <td>
+                            <select onchange="if(this.value === 'none' || this.value === 'wep') showWarning('WARNING: Using weak or no wireless encryption may allow unauthorized attackers to remotely flush your toilet or alter your bidet settings. Use WPA2 Enterprise for maximum security.')">
+                                <option value="wpa2ent" selected>WPA2 Enterprise (RADIUS)</option>
+                                <option value="wpa2">WPA2 Personal</option>
+                                <option value="wep">WEP (Insecure)</option>
+                                <option value="none">Disabled</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Passphrase:</td>
+                        <td><input type="password" value="*****************" size="25" disabled></td>
+                    </tr>
+                </table>
+
+                <div class="section-title">WiFi Direct Fallback (AP Mode)</div>
+                <table class="form-table">
+                    <tr>
+                        <td>Generate Fallback Network:</td>
+                        <td>
+                            <input type="radio" name="wifidirect" checked onchange="if(this.checked) addLogEntry('SYSTEM: WiFi Direct Fallback enabled.')"> Enable 
+                            <input type="radio" name="wifidirect" onchange="if(this.checked) showWarning('WARNING: Disabling WiFi Direct Fallback means you will lose access to the FlushWRT interface if your primary corporate network goes offline. A physical hard-reset button press on the back of the bowl will be required to regain access.')"> Disable
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Fallback SSID (Read Only):</td>
+                        <td><input type="text" value="FlushWRT_DIRECT_COM_4291" size="30" disabled style="background-color: #ddd; color: #555;"></td>
+                    </tr>
+                    <tr>
+                        <td>Fallback Passkey:</td>
+                        <td><input type="password" value="admin1234" size="25"></td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- TAB 2: HYDRAULICS (Bidet configuration)        -->
+            <!-- ============================================== -->
+            <div id="hydraulics" class="page">
+                <div class="section-title">Bidet Nozzle Configuration</div>
+                <table class="form-table">
+                    <tr>
+                        <td>Water Pressure:</td>
+                        <td>
+                            <select id="water-pressure">
+                                <option value="low">Low (Delicate)</option>
+                                <option value="med">Medium (Standard)</option>
+                                <option value="high" selected>High (Commercial Traffic)</option>
+                                <option value="power">PowerWash (Caution)</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Nozzle Z-Axis Offset:</td>
+                        <td>
+                            <select>
+                                <option>-5 mm (Back)</option>
+                                <option>-2 mm</option>
+                                <option selected>0 mm (Center)</option>
+                                <option>+2 mm</option>
+                                <option>+5 mm (Front)</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Spray Mode:</td>
+                        <td>
+                            <input type="radio" name="spray"> Steady 
+                            <input type="radio" name="spray" checked> Pulsate 
+                            <input type="radio" name="spray"> Oscillate
+                        </td>
+                    </tr>
+                </table>
+                <hr>
+                <div style="text-align: center;">
+                    <button type="button" onclick="logAction('Hydraulics Test Sequence Initiated')">Run Test Sequence</button>
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- TAB 3: THERMALS (Heaters and Energy limits)    -->
+            <!-- ============================================== -->
+            <div id="thermals" class="page">
+                <div class="section-title">Thermodynamics</div>
+                <table class="form-table">
+                    <tr>
+                        <td>Temperature Scale:</td>
+                        <td>
+                            <input type="radio" name="tempscale" value="C" checked onchange="updateTempUnits('C')"> Celsius (°C) 
+                            <input type="radio" name="tempscale" value="F" onchange="updateTempUnits('F')"> Fahrenheit (°F)
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Seat Target Temperature:</td>
+                        <td>
+                            <select id="seat-temp" onchange="checkTempWarning(this)">
+                                <option value="disabled" selected>Disabled (Corporate Policy)</option>
+                                <option value="eco">25°C (Eco)</option>
+                                <option value="warm">30°C (Warm)</option>
+                                <option value="standard">38°C (Standard)</option>
+                                <option value="danger">45°C (Winter Mode)</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Water Temperature:</td>
+                        <td>
+                            <select id="water-temp" onchange="checkTempWarning(this)">
+                                <option value="tap" selected>Tap Cold (Cost Saving)</option>
+                                <option value="body">32°C (Body Temp)</option>
+                                <option value="warm">38°C (Warm)</option>
+                                <option value="danger">42°C (Hot)</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Eco-Schedule:</td>
+                        <td>
+                            <input type="radio" name="eco"> On 
+                            <input type="radio" name="eco" checked> Off (24/7 Operations)
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- TAB 4: ATMOSPHERICS (Fan & Deodorizer)         -->
+            <!-- ============================================== -->
+            <div id="atmospherics" class="page">
+                <div class="section-title">Environmental Controls</div>
+                <table class="form-table">
+                    <tr>
+                        <td>Exhaust Fan Speed:</td>
+                        <td>
+                            <select onchange="if(this.value === 'disabled') showWarning('CRITICAL: Disabling the high-velocity exhaust fan violates OSHA air-quality compliance for high-traffic commercial zones. Noxious gas accumulation from heavy-duty contractor payloads may result in stall evacuation and mandatory hazmat protocols.')">
+                                <option value="disabled">Disabled</option>
+                                <option value="low">Low (Quiet)</option>
+                                <option value="med">Medium (Auto)</option>
+                                <option value="high" selected>High (Max Extractor - Constant)</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Night Light Color:</td>
+                        <td>
+                            <select>
+                                <option>Blue</option>
+                                <option>Red</option>
+                                <option>Green</option>
+                                <option>White</option>
+                                <option selected>Disabled</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Deodorizer Module:</td>
+                        <td>
+                            <select onchange="if(this.value === 'empty') showWarning('WARNING: Bypassing the Industrial Pine module is strictly against store maintenance policy. Masking protocols are mandatory to prevent toxic biological plumes from reaching the lumber aisle during peak contractor hours.')">
+                                <option value="citrus">Citrus-Mist v2</option>
+                                <option value="pine">Pine Forest</option>
+                                <option value="lavender">Lavender-Byte</option>
+                                <option value="ocean">Ocean Breeze Protocol</option>
+                                <option value="mountain">Mountain Air (High Elevation)</option>
+                                <option value="euca">Eucalyptus & Mint</option>
+                                <option value="newcar">New Car Smell (Beta)</option>
+                                <option value="server">Server Room Ozone</option>
+                                <option value="neutral">Unscented (Neutralizer Only)</option>
+                                <option value="industrial" selected>Industrial Pine Bleach (Heavy Duty)</option>
+                                <option value="empty">Empty / Disabled</option>
+                            </select>
+                        </td>
+                    </tr>
+                </table>
+                <hr>
+                <div style="text-align: center;">
+                    <button type="button" onclick="logAction('Manual Scent Burst Deployed')">Trigger Scent Burst</button>
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- TAB 5: BIOMETRICS (Sensors & Medical Data)     -->
+            <!-- ============================================== -->
+            <div id="biometrics" class="page">
+                <div class="section-title">Health & Biometrics Logging (Anonymized)</div>
+                <table class="form-table">
+                    <tr>
+                        <td>Urinalysis Sensors:</td>
+                        <td>
+                            <input type="radio" name="urinalysis" checked> Enable 
+                            <input type="radio" name="urinalysis"> Disable
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Optical Stool Analysis:</td>
+                        <td>
+                            <input type="radio" name="stoolanalysis" checked> Enable 
+                            <input type="radio" name="stoolanalysis" onchange="if(this.checked) showWarning('Note: Disabling optical stool analysis will stop tracking the Bristol Scale and Microbiome indicators.')"> Disable
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Seat Weight Tracking:</td>
+                        <td>
+                            <input type="radio" name="weight" checked> Enable (Includes Toolbelt Est.)
+                            <input type="radio" name="weight"> Disable
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Data Export Server (IP):</td>
+                        <td><input type="text" value="10.0.0.50" size="15"> Port: <input type="text" value="8080" size="4"></td>
+                    </tr>
+                </table>
+
+                <div class="section-title" style="margin-top: 20px;">Diagnostic Alerts & Thresholds</div>
+                <table class="form-table">
+                    <tr>
+                        <td>Bristol Stool Scale Alerts:</td>
+                        <td>
+                            <select onchange="if(this.value === 'none') showWarning('WARNING: Disabling Bristol Scale alerts may result in unnoticed gastrointestinal distress over time.')">
+                                <option value="all">Alert on Types 1, 2, 6 & 7 (Standard)</option>
+                                <option value="severe" selected>Alert on Types 1 & 7 Only (Commercial Standard)</option>
+                                <option value="none">Disabled</option>
+                            </select>
+                            <div style="font-size: 10px; margin-top: 4px; color: #333; line-height: 1.3;">
+                                <!-- Helpful medical reference index for users adjusting alerts -->
+                                <strong>Bristol Scale Reference Index:</strong><br>
+                                Type 1: Separate hard lumps (Severe Constipation)<br>
+                                Type 2: Lumpy and sausage-like (Mild Constipation)<br>
+                                Type 3: Sausage shape with cracks on surface (Normal)<br>
+                                Type 4: Smooth, soft sausage or snake (Optimal)<br>
+                                Type 5: Soft blobs with clear-cut edges (Lacking Fiber)<br>
+                                Type 6: Mushy consistency with ragged edges (Mild Diarrhea)<br>
+                                Type 7: Liquid, entirely without solid pieces (Severe Diarrhea)
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Blood/Hematuria Detection:</td>
+                        <td>
+                            <input type="radio" name="blooddetect" checked> Enable 
+                            <input type="radio" name="blooddetect" onchange="if(this.checked) showWarning('CRITICAL: Disabling trace blood detection removes early warning signs for serious medical conditions.')"> Disable
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Uric Acid (Kidney Stone Risk):</td>
+                        <td>
+                            <input type="radio" name="uricacid" checked> Enable 
+                            <input type="radio" name="uricacid"> Disable
+                        </td>
+                    </tr>
+                </table>
+
+                <div class="section-title" style="margin-top: 20px;">6-Month Payload Scan History (Stall 3)</div>
+                <!-- Scrollable container for the massive biometrics log table -->
+                <div style="height: 250px; overflow-y: scroll; border: 1px inset #000; background: #fff; margin-bottom: 15px;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: left;">
+                        <thead style="background: #ccc; position: sticky; top: 0;">
+                            <tr>
+                                <th style="border: 1px solid #999; padding: 4px;">Date/Time</th>
+                                <th style="border: 1px solid #999; padding: 4px;">Session</th>
+                                <th style="border: 1px solid #999; padding: 4px;">Weight</th>
+                                <th style="border: 1px solid #999; padding: 4px;">Vol (ml)</th>
+                                <th style="border: 1px solid #999; padding: 4px;">Mass (g)</th>
+                                <th style="border: 1px solid #999; padding: 4px;">Colors (Liq/Sol)</th>
+                                <th style="border: 1px solid #999; padding: 4px;">Bristol</th>
+                                <th style="border: 1px solid #999; padding: 4px;">Alerts / Flags</th>
+                                <th style="border: 1px solid #999; padding: 4px; text-align: center;">Raw Data</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="background-color: #ffe6e6;">
+                                <td style="border: 1px solid #eee; padding: 4px;">04/06/26, 20:05</td>
+                                <td style="border: 1px solid #eee; padding: 4px; font-weight: bold;">06m 47s</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">288 lbs</td>
+                                <td style="border: 1px solid #eee; padding: 4px; font-weight: bold;">~1100</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">~890</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">Neon Grn / Dk Brn</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: red;">Type 1</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: red;">Radioactive Caffeine Lvls, Critical Mass Density</td>
+                                <td style="border: 1px solid #eee; padding: 4px; text-align: center;"><button type="button" style="font-size: 9px; padding: 2px 5px;" onclick="showDetailedReadings()">View</button></td>
+                            </tr>
+                            <tr style="background-color: #ffe6e6;">
+                                <td style="border: 1px solid #eee; padding: 4px;">04/06/26, 19:45</td>
+                                <td style="border: 1px solid #eee; padding: 4px; font-weight: bold;">07m 45s</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: red; font-weight: bold;">415 lbs</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">~600</td>
+                                <td style="border: 1px solid #eee; padding: 4px; font-weight: bold;">~1200</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">Med Yel / Yel-Brn</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: orange;">Type 5</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: red;">SEAT HINGE STRAIN. Extreme Lipid Content.</td>
+                                <td style="border: 1px solid #eee; padding: 4px; text-align: center;"><button type="button" style="font-size: 9px; padding: 2px 5px;" onclick="showDetailedReadings()">View</button></td>
+                            </tr>
+                            <!-- Code 4 Incident Logging -->
+                            <tr style="background-color: #fff0b3;">
+                                <td style="border: 1px solid #eee; padding: 4px;">04/04/26, 21:15</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">13m 15s</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">155 lbs</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">~15</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">---</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">Opaque Wht / ---</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">---</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: orange;">RHYTHMIC OSCILLATION. High Viscosity. Code 4 Override.</td>
+                                <td style="border: 1px solid #eee; padding: 4px; text-align: center;"><button type="button" style="font-size: 9px; padding: 2px 5px;" onclick="showDetailedReadings()">View</button></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #eee; padding: 4px;">04/01/26, 06:05</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">08m 00s</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">160 lbs</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">~350</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">~400</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">Med Yel / Med Brn</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: green;">Type 4</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: green;">PERFECT BASELINE. Oatmeal & Tea.</td>
+                                <td style="border: 1px solid #eee; padding: 4px; text-align: center;"><button type="button" style="font-size: 9px; padding: 2px 5px;" onclick="showDetailedReadings()">View</button></td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #eee; padding: 4px;">03/28/26, 11:30</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">05m 12s</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">170 lbs</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">~300</td>
+                                <td style="border: 1px solid #eee; padding: 4px; font-weight: bold;">~950</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">Clear / Dk Grn</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: green;">Type 4</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: green;">High Volume, Optimal Density (Vegan Profile)</td>
+                                <td style="border: 1px solid #eee; padding: 4px; text-align: center;"><button type="button" style="font-size: 9px; padding: 2px 5px;" onclick="showDetailedReadings()">View</button></td>
+                            </tr>
+                            <tr style="background-color: #ffe6e6;">
+                                <td style="border: 1px solid #eee; padding: 4px;">03/17/26, 23:55</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">11m 42s</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">210 lbs</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">~450</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">~600</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">Neon Grn / Orange</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: orange;">Type 6</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: red; font-weight: bold;">THERMAL SPIKE. Green Dye + Capsaicin Overload.</td>
+                                <td style="border: 1px solid #eee; padding: 4px; text-align: center;"><button type="button" style="font-size: 9px; padding: 2px 5px;" onclick="showDetailedReadings()">View</button></td>
+                            </tr>
+                            <tr style="background-color: #ffcccc;">
+                                <td style="border: 1px solid #eee; padding: 4px;">03/05/26, 07:15</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">03m 45s</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">175 lbs</td>
+                                <td style="border: 1px solid #eee; padding: 4px; font-weight: bold;">~950</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">---</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">Dk Brn / ---</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: red;">Type 7</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: red;">HIGH VELOCITY LIQUID. Espresso overdose. Tachycardia.</td>
+                                <td style="border: 1px solid #eee; padding: 4px; text-align: center;"><button type="button" style="font-size: 9px; padding: 2px 5px;" onclick="showDetailedReadings()">View</button></td>
+                            </tr>
+                            <tr style="background-color: #ffcccc;">
+                                <td style="border: 1px solid #eee; padding: 4px;">02/18/26, 18:30</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">05m 15s</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">180 lbs</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">~200</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">---</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">Clear / ---</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">---</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: red;">FOREIGN OBJECT: Nitrile Glove (Cleared). Too sterile.</td>
+                                <td style="border: 1px solid #eee; padding: 4px; text-align: center;"><button type="button" style="font-size: 9px; padding: 2px 5px;" onclick="showDetailedReadings()">View</button></td>
+                            </tr>
+                            <tr style="background-color: #ffcccc;">
+                                <td style="border: 1px solid #eee; padding: 4px;">02/04/26, 22:45</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">06m 45s</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">280 lbs</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">~500</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">~450</td>
+                                <td style="border: 1px solid #eee; padding: 4px; font-weight: bold; color: purple;">NEON PURPLE / Red</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: orange;">Type 6</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: red;">SYNTHETIC DYES (Blue 1, Red 40). Vending Machine Diet.</td>
+                                <td style="border: 1px solid #eee; padding: 4px; text-align: center;"><button type="button" style="font-size: 9px; padding: 2px 5px;" onclick="showDetailedReadings()">View</button></td>
+                            </tr>
+                            <tr style="background-color: #fff0b3;">
+                                <td style="border: 1px solid #eee; padding: 4px;">01/20/26, 13:15</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: red; font-weight: bold;">45m 10s</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">135 lbs</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">~200</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">~150</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">Clear / Med Brn</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: green;">Type 3</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: orange;">LOITERING: Newspaper rustling detected.</td>
+                                <td style="border: 1px solid #eee; padding: 4px; text-align: center;"><button type="button" style="font-size: 9px; padding: 2px 5px;" onclick="showDetailedReadings()">View</button></td>
+                            </tr>
+                            <tr style="background-color: #ffe6e6;">
+                                <td style="border: 1px solid #eee; padding: 4px;">01/02/26, 10:10</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">14m 20s</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">275 lbs</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">~400</td>
+                                <td style="border: 1px solid #eee; padding: 4px; font-weight: bold;">~1050</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">Dk Yel / Dk Brn</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: red;">Type 1</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: red;">MACERATOR STRAIN. High Protein/Cement Dust.</td>
+                                <td style="border: 1px solid #eee; padding: 4px; text-align: center;"><button type="button" style="font-size: 9px; padding: 2px 5px;" onclick="showDetailedReadings()">View</button></td>
+                            </tr>
+                            <tr style="background-color: #ffe6e6;">
+                                <td style="border: 1px solid #eee; padding: 4px;">12/26/25, 16:20</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">18m 30s</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">215 lbs</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">~800</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">~600</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">Dk Yel / Dk Brn</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: orange;">Type 2</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: red;">GOUT WARNING. Extreme Uric Acid. High wine/steak.</td>
+                                <td style="border: 1px solid #eee; padding: 4px; text-align: center;"><button type="button" style="font-size: 9px; padding: 2px 5px;" onclick="showDetailedReadings()">View</button></td>
+                            </tr>
+                            <tr style="background-color: #ffcccc;">
+                                <td style="border: 1px solid #eee; padding: 4px;">12/15/25, 08:45</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">02m 50s</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">145 lbs</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">~100</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">~50</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">Dk Yel / Blk</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: orange;">Type 6</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: red;">SEVERE ULCER RISK. Black Coffee only.</td>
+                                <td style="border: 1px solid #eee; padding: 4px; text-align: center;"><button type="button" style="font-size: 9px; padding: 2px 5px;" onclick="showDetailedReadings()">View</button></td>
+                            </tr>
+                            <tr style="background-color: #ffe6e6;">
+                                <td style="border: 1px solid #eee; padding: 4px;">11/28/25, 06:15</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">12m 10s</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: red;">355 lbs</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">~400</td>
+                                <td style="border: 1px solid #eee; padding: 4px; font-weight: bold;">~1400</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">Yel / Grn-Brn</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: orange;">Type 5</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: red;">METHANE ALARM. Gas Station Burrito profile.</td>
+                                <td style="border: 1px solid #eee; padding: 4px; text-align: center;"><button type="button" style="font-size: 9px; padding: 2px 5px;" onclick="showDetailedReadings()">View</button></td>
+                            </tr>
+                            <tr style="background-color: #fff0b3;">
+                                <td style="border: 1px solid #eee; padding: 4px;">11/18/25, 14:30</td>
+                                <td style="border: 1px solid #eee; padding: 4px; font-weight: bold;">22m 15s</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">195 lbs</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">~200</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">~300</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">Clear / Gray</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: red;">Type 1</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: orange;">TIKTOK AUDIO DETECTED. Keto/Carnivore Diet.</td>
+                                <td style="border: 1px solid #eee; padding: 4px; text-align: center;"><button type="button" style="font-size: 9px; padding: 2px 5px;" onclick="showDetailedReadings()">View</button></td>
+                            </tr>
+                            <tr style="background-color: #ffcccc;">
+                                <td style="border: 1px solid #eee; padding: 4px;">10/31/25, 20:45</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">02m 10s</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">130 lbs</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">~150</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">~200</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">Clear / Pl Brn</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: green;">Type 4</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: orange;">High Glucose (Halloween Candy Diet). Fast Flush.</td>
+                                <td style="border: 1px solid #eee; padding: 4px; text-align: center;"><button type="button" style="font-size: 9px; padding: 2px 5px;" onclick="showDetailedReadings()">View</button></td>
+                            </tr>
+                            <tr style="background-color: #fff0b3;">
+                                <td style="border: 1px solid #eee; padding: 4px;">10/12/25, 10:15</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">06m 05s</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">195 lbs</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">~100</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">~50</td>
+                                <td style="border: 1px solid #eee; padding: 4px;">Clear / Dk Brn</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: orange;">Type 1</td>
+                                <td style="border: 1px solid #eee; padding: 4px; color: orange;">GLP-1 Weight Loss Meds / Ketosis Detected.</td>
+                                <td style="border: 1px solid #eee; padding: 4px; text-align: center;"><button type="button" style="font-size: 9px; padding: 2px 5px;" onclick="showDetailedReadings()">View</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="section-title" style="margin-top: 20px;">6-Month Health Trends (Stall 3 Aggregated)</div>
+                <table class="form-table" style="background: #fff; border: 1px solid #000; padding: 10px;">
+                    <tr>
+                        <td style="width: 50%; border-bottom: 1px solid #ccc;">Total Biometric Scans Logged:</td>
+                        <td style="border-bottom: 1px solid #ccc; font-weight: bold;">88,412</td>
+                    </tr>
+                    <tr>
+                        <td style="border-bottom: 1px solid #ccc;">Avg. Session Duration:</td>
+                        <td style="border-bottom: 1px solid #ccc; color: red; font-weight: bold;">17m 30s (Loitering Warning)</td>
+                    </tr>
+                    <tr>
+                        <td style="border-bottom: 1px solid #ccc;">Max Recorded Session:</td>
+                        <td style="border-bottom: 1px solid #ccc; color: orange;">1h 42m 10s (Possible Nap)</td>
+                    </tr>
+                    <tr>
+                        <td style="border-bottom: 1px solid #ccc;">Average Hydration Baseline:</td>
+                        <td style="border-bottom: 1px solid #ccc; color: red;">Poor (86% chronically dehydrated)</td>
+                    </tr>
+                    <tr>
+                        <td style="border-bottom: 1px solid #ccc;">Average Bristol Scale Index:</td>
+                        <td style="border-bottom: 1px solid #ccc; color: red;">Type 2.2 (Widespread Constipation)</td>
+                    </tr>
+                    <tr>
+                        <td style="border-bottom: 1px solid #ccc;">Elevated Uric Acid Events:</td>
+                        <td style="border-bottom: 1px solid #ccc; color: red;">68,105 events</td>
+                    </tr>
+                    <tr>
+                        <td style="border-bottom: 1px solid #ccc;">Trace Blood Detections:</td>
+                        <td style="border-bottom: 1px solid #ccc; color: orange;">2,412 (Advise HR)</td>
+                    </tr>
+                    <tr>
+                        <td style="border-bottom: 1px solid #ccc;">Microbiome 6-Month Average:</td>
+                        <td style="border-bottom: 1px solid #ccc; color: red;">26/100 (Hazardous)</td>
+                    </tr>
+                    <tr>
+                        <td>Weight Average Trend:</td>
+                        <td>Avg 242 lbs (109 kg)</td>
+                    </tr>
+                </table>
+
+                <hr>
+                <div style="text-align: center;">
+                    <button type="button" onclick="logAction('Biometrics Data Export Initiated via HTTP')">Export CSV Payload</button>
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- TAB 6: AUDIO & CONTROLS                        -->
+            <!-- ============================================== -->
+            <div id="audio_controls" class="page">
+                <div class="section-title">Acoustic Privacy Settings</div>
+                <table class="form-table">
+                    <tr>
+                        <td>System Volume:</td>
+                        <td>
+                            <select>
+                                <option>Mute</option>
+                                <option>Low</option>
+                                <option>Medium</option>
+                                <option selected>High (Max dB - Construction Grade)</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Privacy Masking Audio:</td>
+                        <td>
+                            <select>
+                                <option>Disabled</option>
+                                <option>Zen Waterfall</option>
+                                <option>Gentle Rain</option>
+                                <option>White Noise (50Hz-10kHz)</option>
+                                <option>Pink Noise (Balanced)</option>
+                                <option>Brown Noise (Low Frequency)</option>
+                                <option>Aircraft Cabin Drone</option>
+                                <option>Crowded Coffee Shop</option>
+                                <option>Datacenter Server Hum</option>
+                                <option>Dial-Up Modem Handshake</option>
+                                <option selected>Jackhammer / Heavy Machinery</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Startup Chime:</td>
+                        <td>
+                            <input type="radio" name="startupchime"> Enable
+                            <input type="radio" name="startupchime" checked> Disable
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Button Beep Feedback:</td>
+                        <td>
+                            <input type="radio" name="buttonbeep" checked> Enable
+                            <input type="radio" name="buttonbeep"> Disable
+                        </td>
+                    </tr>
+                </table>
+
+                <div class="section-title" style="margin-top: 20px;">Physical Hardware Controls</div>
+                <table class="form-table">
+                    <tr>
+                        <td>Lid Auto-Open Proximity:</td>
+                        <td>
+                            <select>
+                                <option selected>Disabled (Manual Only - Vandal Resistant)</option>
+                                <option>Near (1 ft)</option>
+                                <option>Medium (3 ft)</option>
+                                <option>Far (6 ft)</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Night-time Lid Lock (Hardened Steel Actuator):</td>
+                        <td>
+                            <input type="radio" name="lidlock" checked onchange="if(this.checked) showWarning('CRITICAL: Enabling Night-time Lid Lock engages a physical steel hardware clamp. During lock hours, all incoming biological traffic is blocked. Unauthorized users will be denied access and must route their payload to a different toilet.')"> Enable
+                            <input type="radio" name="lidlock"> Disable
+                            <div style="font-size: 10px; margin-top: 5px; color: #333;"><i>Override: Physically Disabled (Commercial Security Mode)</i></div>
+                        </td>
+                    </tr>
+                </table>
+                <hr>
+                <div style="text-align: center;">
+                    <button type="button" onclick="logAction('Audio Privacy Mask Test Initiated')">Test Privacy Audio</button>
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- TAB 7: USAGE MONITOR (Billing & Flow Stats)    -->
+            <!-- ============================================== -->
+            <div id="usage" class="page">
+                <div class="section-title">Live Resource Draw</div>
+                <table class="form-table" style="background: #fff; border: 1px solid #000; padding: 10px;">
+                    <tr>
+                        <td style="border-bottom: 1px solid #ccc; width: 40%;">Seat Heater:</td>
+                        <td style="border-bottom: 1px solid #ccc;">0.0 W (Disabled by Policy)</td>
+                    </tr>
+                    <tr>
+                        <td style="border-bottom: 1px solid #ccc;">Water Heater:</td>
+                        <td style="border-bottom: 1px solid #ccc;">0.0 W (Disabled by Policy)</td>
+                    </tr>
+                    <tr>
+                        <td style="border-bottom: 1px solid #ccc;">System Idle Draw:</td>
+                        <td style="border-bottom: 1px solid #ccc;">14.2 W</td>
+                    </tr>
+                    <tr>
+                        <td>Water Flow Rate:</td>
+                        <td>0.0 GPM (Idle)</td>
+                    </tr>
+                </table>
+
+                <div class="section-title" style="margin-top: 20px;">Billing Cycle Configuration</div>
+                <table class="form-table">
+                    <tr>
+                        <td>Power Cycle Start Day:</td>
+                        <td>
+                            Day <input type="text" value="1" size="3" onchange="logAction('Power cycle start day changed to ' + this.value)"> of month
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Water Cycle Start Day:</td>
+                        <td>
+                            Day <input type="text" value="15" size="3" onchange="logAction('Water cycle start day changed to ' + this.value)"> of month
+                        </td>
+                    </tr>
+                </table>
+
+                <div class="section-title" style="margin-top: 20px;">Cumulative Usage Statistics (Stall 3)</div>
+                <table class="form-table" style="background: #fff; border: 1px solid #000; padding: 10px;">
+                    <tr>
+                        <td style="width: 40%; border-bottom: 2px solid #000; font-weight: bold;">Metric</td>
+                        <td style="width: 30%; border-bottom: 2px solid #000; font-weight: bold; text-align: center;">Past 24 Hours</td>
+                        <td style="width: 30%; border-bottom: 2px solid #000; font-weight: bold; text-align: center;">6-Month Cycle</td>
+                    </tr>
+                    <tr>
+                        <td style="border-bottom: 1px solid #ccc;">Total Power Consumption:</td>
+                        <td style="border-bottom: 1px solid #ccc; text-align: center;">1.2 kWh</td>
+                        <td style="border-bottom: 1px solid #ccc; text-align: center;">212.8 kWh</td>
+                    </tr>
+                    <tr>
+                        <td style="border-bottom: 1px solid #ccc;">Bidet Water Usage:</td>
+                        <td style="border-bottom: 1px solid #ccc; text-align: center;">84.5 Gal (319.8 L)</td>
+                        <td style="border-bottom: 1px solid #ccc; text-align: center;">18,482.1 Gal (69962.1 L)</td>
+                    </tr>
+                    <tr>
+                        <td>Total Flush Volume:</td>
+                        <td style="text-align: center;">488.8 Gal (1850.2 L)</td>
+                        <td style="text-align: center;">84,151.2 Gal (318546.8 L)</td>
+                    </tr>
+                </table>
+                <hr>
+                <div style="text-align: center;">
+                    <button type="button" onclick="logAction('Resource Usage Counters Reset')">Reset Counters</button>
+                    <button type="button" onclick="logAction('Usage Report Exported to CSV')">Export Report</button>
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- TAB 8: STATUS & LOGS (Syslog and Maintenance)  -->
+            <!-- ============================================== -->
+            <div id="logs" class="page">
+                <div class="section-title">System Status & Logs</div>
+                <table class="form-table" style="margin-bottom: 5px;">
+                    <tr>
+                        <td style="width:25%;">System Uptime:</td>
+                        <td style="text-align: left;">184 days, 11:15:03</td>
+                    </tr>
+                    <tr>
+                        <td>Filter Status:</td>
+                        <td style="text-align: left; color: red; font-weight: bold;">-12% Remaining (CRITICAL REPLACEMENT PAST DUE)</td>
+                    </tr>
+                </table>
+                
+                <!-- The actual terminal log window injected via JS -->
+                <div class="logs-area" id="syslog"></div>
+                
+                <div style="text-align: center; margin-top: 10px;">
+                    <button type="button" onclick="refreshLogs()">Refresh</button>
+                    <button type="button" onclick="clearLogs()">Clear</button>
+                </div>
+
+                <div class="section-title">Maintenance Actions</div>
+                <table class="form-table" style="margin-bottom: 5px;">
+                    <tr>
+                        <td style="width:35%; text-align: center;"><button type="button" onclick="logAction('Remote Flush Triggered')">Remote Flush</button></td>
+                        <td style="text-align: left; font-size: 11px;"><b>Warning:</b> Ensure seat is unoccupied before manual flush.</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: center;"><button type="button" onclick="startUVClean()">UV Self-Clean</button></td>
+                        <td style="text-align: left; font-size: 11px;"><b>Note:</b> Lid will auto-close and lock for the 3-minute duration for safety.</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: center;"><button type="button" onclick="startDescaling()">Descaling Cycle</button></td>
+                        <td style="text-align: left; font-size: 11px;"><b>Note:</b> Fill reservoir port A with FlushWRT Descaler or white vinegar before starting. Clears limescale.</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: center;"><button type="button" onclick="testWaterPressure()">Test Water Pressure</button></td>
+                        <td style="text-align: left; font-size: 11px;"><b>Note:</b> Diagnoses supply lines. Alerts if a pressure drop is detected (possible leak).</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: center;"><button type="button" style="color: red; border-color: red;" onclick="emergencyRelease()">Emergency Clog Release</button></td>
+                        <td style="text-align: left; font-size: 11px; color: red;"><b>Warning:</b> Stand back! High-pressure CO2 discharge.</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: center;"><button type="button" onclick="rebootSystem()">Reboot FlushWRT</button></td>
+                        <td style="text-align: left; font-size: 11px;"><b>Warning:</b> System will be unresponsive for ~2 minutes.</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: center;"><button type="button" style="color: red; border-color: red;" onclick="factoryReset()">Factory Reset</button></td>
+                        <td style="text-align: left; font-size: 11px; color: red;"><b>Warning:</b> Erases all IPs, schedules, and aim calibrations.</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Global Action Buttons (Visible on all tabs except logs) -->
+            <div class="action-buttons" id="global-actions">
+                <button type="button" onclick="saveSettings()">Save Settings</button>
+                <button type="button" onclick="cancelSettings()">Cancel Changes</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ============================================== -->
+<!-- POPUP MODALS                                   -->
+<!-- ============================================== -->
+<div id="save-modal">
+    <p>Settings are successful.</p>
+    <button onclick="document.getElementById('save-modal').style.display='none'">Continue</button>
+</div>
+
+<div id="warning-modal">
+    <h2>Warning!</h2>
+    <p id="warning-text"></p>
+    <button onclick="document.getElementById('warning-modal').style.display='none'">I Understand</button>
+</div>
+
+<!-- Detailed Biometric Raw Data Modal (Simulates a deep medical scan) -->
+<div id="details-modal">
+    <h2>Raw Scan Data - Log #18099</h2>
+    <div id="raw-scan-data" style="font-family: 'Courier New', Courier, monospace; font-size: 11px; background: #fff; border: 1px inset #000; padding: 10px; margin-bottom: 15px; height: 150px; overflow-y: auto;">
+        > SPECTROSCOPY_INIT... OK<br>
+        > WAVELENGTH_ANALYZE: 380nm-750nm<br>
+        > SESSION_TIMER: 702 SECONDS<br>
+        > UROBILINOGEN: 1.5 mg/dL (Normal)<br>
+        > SPECIFIC_GRAVITY: 1.025<br>
+        > PH_LEVEL: 3.5 (HIGHLY ACIDIC)<br>
+        > CAPSAICIN_CONCENTRATION: EXTREME (WARNING: THERMAL SPIKE)<br>
+        > SCU (SCOVILLE UNITS EST): 850,000+ (Ghost Pepper / Takis blend)<br>
+        > BOWL_TEMP_AMBIENT: 39°C (+12°C Delta)<br>
+        > LEUKOCYTES: NEGATIVE<br>
+        > NITRITE: NEGATIVE<br>
+        > PROTEIN: NEGATIVE<br>
+        > KETONES: 1.2 mmol/L<br>
+        > OPTICAL_COLOR_LIQ: #FFCC00 (Dark Yellow)<br>
+        > OPTICAL_COLOR_SOL: #FF4500 (Orange-Red / Warning Color)<br>
+        > MASS_DENSITY: 1.10 g/cm3<br>
+        > FIBER_ESTIMATE: 8g (Low)<br>
+        > MICROBIOTA_DIVERSITY_IDX: 1.8 (ACID-WASHED)<br>
+        > END_OF_REPORT
+    </div>
+    <div style="text-align: center;">
+        <button onclick="document.getElementById('details-modal').style.display='none'">Close</button>
+    </div>
+</div>
+
+<!-- ============================================== -->
+<!-- JAVASCRIPT LOGIC                               -->
+<!-- ============================================== -->
+<script>
+    // Dictionary mapping tab IDs to their respective sidebar help content
+    const helpTexts = {
+        setup: "<h3>Setup</h3><p>Configure the basic network settings and device name for your smart toilet.</p><p>Auto-flush relies on the seat occupancy sensor.</p><p><strong>Security Integrations:</strong> Sends silent SNMP traps to Security for loitering, tampering, or Code 4 events (copied to HR for employees).</p><p><strong>Wireless Security:</strong> WPA2 Enterprise is highly recommended.</p>",
+        hydraulics: "<h3>Hydraulics</h3><p>Adjust the water pressure and physical alignment of the bidet nozzle.</p><p><strong>Warning:</strong> PowerWash mode uses maximum municipal water pressure.</p>",
+        thermals: "<h3>Thermals</h3><p>Manage energy usage and comfort by adjusting heating elements.</p><p>Seat and Water heaters are disabled via Corporate Cost-Saving Policy.</p>",
+        atmospherics: "<h3>Atmospherics</h3><p>Control the exhaust fan and ambient bowl lighting.</p><p>Check deodorizer fluid levels regularly.</p>",
+        biometrics: "<h3>Biometrics</h3><p>Configure local health sensors. Data is stored locally in NVRAM unless a Data Export Server IP is configured.</p>",
+        audio_controls: "<h3>Audio & Controls</h3><p>Manage system sounds, privacy masking, and physical lid proximity sensors.</p><p><strong>Note:</strong> Physical lid override is disabled on commercial units to prevent tampering.</p>",
+        usage: "<h3>Usage Monitor</h3><p>Track real-time and historical power and water consumption.</p><p><strong>Note:</strong> Resetting counters will permanently erase historical tracking data.</p>",
+        logs: "<h3>Status & Logs</h3><p>View system events, maintenance alerts, and perform administrative overrides.</p>"
+    };
+
+    // Handles tab navigation, hiding all pages and showing the active one
+    function switchTab(tabId, element) {
+        document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+
+        document.getElementById(tabId).classList.add('active');
+        element.classList.add('active');
+        document.getElementById('help-content').innerHTML = helpTexts[tabId];
+
+        // Hide global Save/Cancel buttons if we are on the Logs tab
+        if(tabId === 'logs') {
+            document.getElementById('global-actions').style.display = 'none';
+        } else {
+            document.getElementById('global-actions').style.display = 'block';
+        }
+    }
+
+    // Hardcoded temperature presets in Celsius
+    const tempDataC = {
+        seat: [
+            { val: "disabled", text: "Disabled (Corporate Policy)" },
+            { val: "eco", text: "25°C (Eco)" },
+            { val: "warm", text: "30°C (Warm)" },
+            { val: "standard", text: "38°C (Standard)" },
+            { val: "danger", text: "45°C (Winter Mode)" }
+        ],
+        water: [
+            { val: "tap", text: "Tap Cold (Cost Saving)" },
+            { val: "body", text: "32°C (Body Temp)" },
+            { val: "warm", text: "38°C (Warm)" },
+            { val: "danger", text: "42°C (Hot)" }
+        ]
+    };
+
+    // Hardcoded temperature presets in Fahrenheit
+    const tempDataF = {
+        seat: [
+            { val: "disabled", text: "Disabled (Corporate Policy)" },
+            { val: "eco", text: "77°F (Eco)" },
+            { val: "warm", text: "86°F (Warm)" },
+            { val: "standard", text: "100°F (Standard)" },
+            { val: "danger", text: "113°F (Winter Mode)" }
+        ],
+        water: [
+            { val: "tap", text: "Tap Cold (Cost Saving)" },
+            { val: "body", text: "90°F (Body Temp)" },
+            { val: "warm", text: "100°F (Warm)" },
+            { val: "danger", text: "108°F (Hot)" }
+        ]
+    };
+
+    // Helper function to rebuild select options dynamically
+    function updateSelectOptions(selectId, dataSet, currentVal) {
+        const select = document.getElementById(selectId);
+        select.innerHTML = '';
+        dataSet.forEach(opt => {
+            const optionEl = document.createElement('option');
+            optionEl.value = opt.val;
+            optionEl.textContent = opt.text;
+            if(opt.val === currentVal) optionEl.selected = true;
+            select.appendChild(optionEl);
+        });
+    }
+
+    // Swaps UI units between C and F
+    function updateTempUnits(unit) {
+        const seatSelect = document.getElementById('seat-temp');
+        const waterSelect = document.getElementById('water-temp');
+        
+        const currentSeatVal = seatSelect.value;
+        const currentWaterVal = waterSelect.value;
+
+        const dataSet = unit === 'C' ? tempDataC : tempDataF;
+
+        updateSelectOptions('seat-temp', dataSet.seat, currentSeatVal);
+        updateSelectOptions('water-temp', dataSet.water, currentWaterVal);
+        
+        addLogEntry(`SYSTEM: Temperature scale changed to ${unit === 'C' ? 'Celsius' : 'Fahrenheit'}.`);
+    }
+
+    // Triggers safety warnings if winter mode or hot tap is selected (burn liability)
+    function checkTempWarning(selectElement) {
+        if(selectElement.value === 'danger') {
+            if(selectElement.id === 'seat-temp') {
+                showWarning('WARNING: Extended exposure to seat temperatures above 40°C (104°F) may cause low-temperature burns to the skin. Use with extreme caution.');
+            } else if (selectElement.id === 'water-temp') {
+                showWarning('WARNING: Water temperatures above 40°C (104°F) can cause severe scalding or burns to sensitive areas. Proceed with caution.');
+            }
+        }
+    }
+
+
+    // --- Logging & Core System Functions ---
+    const syslog = document.getElementById('syslog');
+    
+    // Generates a current HH:MM:SS timestamp string in 24-hour time
+    function getTimestamp() {
+        const now = new Date();
+        return `[${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}]`;
+    }
+
+    // Appends a new line to the terminal log and auto-scrolls to the bottom
+    function addLogEntry(message) {
+        const entry = `${getTimestamp()} ${message}\n`;
+        syslog.textContent += entry;
+        syslog.scrollTop = syslog.scrollHeight;
+    }
+
+    // Wrapper to log generic UI clicks
+    function logAction(actionName) {
+        addLogEntry(`USER_ACTION: ${actionName}`);
+    }
+
+    // Simulated hardware actions with fake timeouts to mimic mechanical response times
+    function emergencyRelease() {
+        addLogEntry('WARNING: Emergency CO2 Clog Release Initiated!');
+        setTimeout(() => addLogEntry('SYSTEM: Line pressurized. Release successful.'), 1500);
+    }
+
+    function startUVClean() {
+        addLogEntry('SYSTEM: UV Cleaning Cycle Initiated.');
+        setTimeout(() => addLogEntry('SYSTEM: Auto-closing and locking lid for safety...'), 800);
+        setTimeout(() => addLogEntry('SYSTEM: Lid securely locked. Activating UV-C emitters (Duration: 3m).'), 1800);
+    }
+
+    function startDescaling() {
+        addLogEntry('SYSTEM: Descaling Cycle Initiated.');
+        setTimeout(() => addLogEntry('SYSTEM: Drawing solution from Reservoir Port A...'), 1000);
+        setTimeout(() => addLogEntry('SYSTEM: Pumping descaler through bidet and internal lines. Soaking phase started (Est: 15m)...'), 2500);
+    }
+
+    // Simulated diagnostic sequence for plumbing
+    function testWaterPressure() {
+        addLogEntry('SYSTEM: Initiating water pressure diagnostic...');
+        setTimeout(() => addLogEntry('SYSTEM: Pressurizing internal manifold...'), 1000);
+        setTimeout(() => addLogEntry('SYSTEM: Measuring supply line static pressure...'), 2500);
+        setTimeout(() => {
+            addLogEntry('ERROR: Pressure drop detected! (Expected >40 PSI, Actual 31.5 PSI)');
+            showWarning('DIAGNOSTIC ALERT: A significant pressure drop was detected in the internal manifold. This may indicate a slow leak, failing O-ring, or a partially closed supply valve. Please inspect the physical water connections immediately to prevent potential water damage.');
+        }, 4000);
+    }
+
+    function refreshLogs() {
+        addLogEntry('SYSTEM: Log refreshed by user.');
+    }
+
+    function clearLogs() {
+        syslog.textContent = '';
+        addLogEntry('SYSTEM: Logs cleared by administrator.');
+    }
+
+    function rebootSystem() {
+        addLogEntry('SYSTEM: Reboot sequence initiated...');
+        setTimeout(() => addLogEntry('SYSTEM: Shutting down hydraulics and heating elements...'), 800);
+        setTimeout(() => addLogEntry('SYSTEM: Connection lost. Restarting...'), 1800);
+    }
+
+    function factoryReset() {
+        addLogEntry('WARNING: Factory Reset initiated.');
+        setTimeout(() => addLogEntry('SYSTEM: Erasing NVRAM and custom presets...'), 1000);
+        setTimeout(() => addLogEntry('SYSTEM: Restoring factory defaults...'), 2200);
+        setTimeout(() => addLogEntry('SYSTEM: Reset complete. Please reboot.'), 3000);
+    }
+
+    // UI Modal Triggers
+    function saveSettings() {
+        document.getElementById('save-modal').style.display = 'block';
+        addLogEntry('SYSTEM: Configuration saved to NVRAM.');
+    }
+
+    function cancelSettings() {
+        addLogEntry('SYSTEM: Unsaved changes discarded.');
+    }
+
+    function showWarning(message) {
+        document.getElementById('warning-text').textContent = message;
+        document.getElementById('warning-modal').style.display = 'block';
+        addLogEntry('SYSTEM: User prompted with configuration warning.');
+    }
+
+    function showDetailedReadings() {
+        document.getElementById('details-modal').style.display = 'block';
+        addLogEntry('SYSTEM: User accessed detailed raw biometrics scan (Log #18099).');
+    }
+
+    // Initialize with a massive 6-month historical log block depicting life in a hardware store bathroom
+    // Timestamps strictly conform to 24-hour standard format (00:00 - 23:59)
+    window.onload = () => {
+        syslog.textContent = 
+`[10/12 05:30:00] SYSTEM: Bi-Annual Fall diagnostics initialized. Firmware DD-FLUSH v4.20.1-COMMERCIAL loaded.
+[10/12 10:15:00] Access Granted: RFID Scan [ID: 900-Z] - 'Corporate Greg', Age 41, M, Regional Manager.
+[10/12 10:21:05] Urinalysis complete. GLP-1 weight loss signature / Ketosis detected.
+[10/12 10:21:05] Auto-flush engaged. Session duration: 6m 05s.
+[10/31 20:45:12] Access Granted: RFID Scan [ID: 010-R] - '"Rookie" Ray', Age 18, M, Lot Associate.
+[10/31 20:47:22] Urinalysis complete. High Glucose. Halloween Candy Diet detected.
+[10/31 20:47:22] Auto-flush engaged. Session duration: 2m 10s. User ran out due to loud flush noise.
+[11/18 14:30:00] Access Granted: RFID Scan [ID: 711-X] - 'Chad', Age 26, M, DIY Influencer.
+[11/18 14:42:30] Acoustic Sensor Alert: TikTok audio detected. Unauthorized filming in stall.
+[11/18 14:52:12] Optical Stool Analysis complete. Gray/Clear coloration. Keto/Carnivore diet failure.
+[11/18 14:52:15] Auto-flush engaged. Session duration: 22m 15s.
+[11/28 06:15:05] Access Granted: RFID Scan [ID: 550-D] - '"Two-Ton" Tony', Age 38, M, Delivery Driver.
+[11/28 06:21:30] ALARM: Atmospherics sensor overloaded. High Methane Gas levels detected.
+[11/28 06:21:32] SYSTEM: Gas Station Burrito profile confirmed. Engaging turbo extractor fan.
+[11/28 06:27:15] Auto-flush engaged. Session duration: 12m 10s.
+[12/15 08:45:22] Access Granted: RFID Scan [ID: 320-P] - '"Nervous" Ned', Age 55, M, Paint Dept Manager.
+[12/15 08:48:10] Urinalysis complete. Extreme acidity. High ulcer risk. Pure black coffee diet.
+[12/15 08:48:12] Auto-flush engaged. Session duration: 2m 50s.
+[12/26 16:20:10] Access Granted: RFID Scan [ID: 412-V] - 'Brad', Age 31, M, Vendor Sales Rep.
+[12/26 16:38:10] Urinalysis complete. Extreme Uric Acid levels. Gout warning.
+[12/26 16:38:20] Optical Stool Analysis complete. Expensive wine/steak diet confirmed.
+[12/26 16:38:40] Auto-flush engaged. Session duration: 18m 30s.
+[01/02 10:10:00] Access Granted: RFID Scan [ID: 199-I] - '"Iron" Mike', Age 42, M, Concrete Specialist.
+[01/02 10:24:15] Optical Stool Analysis complete. Mass: ~1050g.
+[01/02 10:24:18] ALARM: MACERATOR STRAIN. High Protein/Cement Dust diet detected.
+[01/02 10:24:20] Auto-flush engaged. Session duration: 14m 20s.
+[01/20 13:15:00] Access Granted: RFID Scan [ID: 002-A] - 'Arthur', Age 74, M, Retired/DIYer.
+[01/20 13:30:00] WARNING: Maximum occupancy time exceeded (Loitering threshold 15m reached).
+[01/20 13:45:00] Acoustic Sensor Alert: Sustained newspaper rustling detected.
+[01/20 14:00:10] Auto-flush engaged. Session duration: 45m 10s.
+[02/04 22:45:00] Access Granted: RFID Scan [ID: 772-R] - '"Snacks" Jackson', Age 29, M, Receiving.
+[02/04 22:50:10] Optical Sensor Warning: Unknown organic coloration.
+[02/04 22:50:15] DIAGNOSTIC: Synthetic Dyes (Blue 1, Red 40) detected. Vending machine diet.
+[02/04 22:51:45] Auto-flush engaged. Session duration: 6m 45s.
+[02/18 18:30:00] Access Granted: RFID Scan [ID: 333-D] - 'Dr. DIY', Age 50, M, Weekend Remodeler.
+[02/18 18:35:10] ERROR: Macerator Jam Detected! Foreign Object Analysis.
+[02/18 18:35:12] DIAGNOSTIC: "Nitrile Surgical Glove". Bypassing macerator.
+[02/18 18:35:15] Auto-flush engaged. Session duration: 5m 15s.
+[03/05 07:15:00] Access Granted: RFID Scan [ID: 119-R] - '"Caffeine" Carl', Age 45, M, Tool Rental.
+[03/05 07:18:30] ERROR: High velocity liquid spray detected on bowl walls.
+[03/05 07:18:40] Urinalysis complete. Espresso overdose. Tachycardia warning.
+[03/05 07:18:45] Auto-flush engaged. Session duration: 3m 45s.
+[03/17 23:55:00] Access Granted: RFID Scan [ID: 313-E] - 'Eddie', Age 35, M, Night Stocker.
+[04/18 00:06:15] WARNING: THERMAL SPIKE. Bowl ambient temp increased by 12°C.
+[04/18 00:06:20] DIAGNOSTIC: Extreme Capsaicin Overload. Optical color: Orange-Red.
+[04/18 00:06:25] SYSTEM: Activating maximum exhaust fan to vent spicy particulate.
+[04/18 00:06:42] Auto-flush engaged. Session duration: 11m 42s.
+[03/28 11:30:00] Access Granted: RFID Scan [ID: 616-V] - 'Marco', Age 28, M, Landscaper.
+[03/28 11:35:12] DIAGNOSTIC: High Volume, Optimal Density (Vegan Profile). High fiber detected.
+[03/28 11:35:12] Auto-flush engaged. Session duration: 5m 12s.
+[04/01 06:05:00] Access Granted: RFID Scan [ID: 101-H] - 'Ol Rusty', Age 68, M, Hardware Lifer.
+[04/01 06:13:00] Optical Stool Analysis complete. PERFECT BASELINE (Type 4). Oatmeal & Tea diet confirmed.
+[04/01 06:13:00] Auto-flush engaged. Session duration: 8m 00s.
+[04/04 21:15:00] Access Granted: RFID Scan [ID: 211-M] - 'Steve', Age 19, M, Lumber Associate.
+[04/04 21:26:30] WARNING: Rhythmic oscillation detected on seat hinges. Frequency: 2.5Hz.
+[04/04 21:26:35] Acoustic Sensor Alert: Suspicious rhythmic breathing. Audio signature match: 'Manual Override / Solitary Act'.
+[04/04 21:26:40] SYSTEM: Auto-deploying extreme privacy mask (Rotary Hammer drill at 110dB).
+[04/04 21:26:45] SYSTEM: Code 4 Triggered. Employee identified. Routing silent telemetry alert to Security (10.0.99.50) AND Human Resources (10.0.40.15).
+[04/04 21:28:15] Auto-flush engaged. Session duration: 13m 15s.
+[04/06 19:45:00] Access Granted: RFID Scan [ID: 808-F] - '"Tiny" Tim', Age 32, M, Forklift Operator.
+[04/06 19:45:05] Occupancy sensor triggered. (Weight est: 415 lbs)
+[04/06 19:46:00] ALARM: Structural strain limit warning on ceramic base.
+[04/06 19:52:40] Optical Stool Analysis complete. Mass: ~1200g. Extreme Lipid Content.
+[04/06 19:52:45] Auto-flush engaged. Session duration: 7m 45s.
+[04/06 20:05:00] Access Granted: RFID Scan [ID: 881-C] - 'Kyle "Monster" S.', Age 22, M, Drywall Apprentice.
+[04/06 20:09:15] Urinalysis complete. Vol: ~1100ml, Color: Radioactive Green.
+[04/06 20:11:35] Optical Stool Analysis complete. Mass: ~890g. Critical Mass Density.
+[04/06 20:11:47] Auto-flush engaged. Session duration: 6m 47s.
+`;
+        // Initial log entry showing manual access via the web interface
+        addLogEntry('Admin interface accessed via Web UI.');
+    };
+</script>
+
+</body>
+</html>
